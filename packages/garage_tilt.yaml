@@ -1,0 +1,95 @@
+sensor:
+- platform: template
+  sensors:
+    garage_tilt_battery:
+      friendly_name: "Garage Tilt Sensor"
+      value_template: >-
+        {%- if is_state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level', 'None') -%}
+          n/a
+        {%- else -%}
+          {{ state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level') }}
+        {%- endif -%}
+      icon_template: >-
+        {%- if is_state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level', 'None') -%}
+          mdi:battery-unknown
+        {%- elif state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level')|float > 80 -%}
+          mdi:battery-80
+        {%- elif state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level')|float > 60 -%}
+          mdi:battery-60
+        {%- elif state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level')|float > 40 -%}
+          mdi:battery-40
+        {%- elif state_attr( 'zwave.ecolink_garage_door_tilt_sensor', 'battery_level')|float > 20 -%}
+          mdi:battery-20
+        {%- else -%}
+          mdi:battery-alert
+        {%- endif -%}
+      unit_of_measurement: '%'
+      entity_id: zwave.ecolink_garage_door_tilt_sensor
+
+cover:
+  - platform: template
+    covers:
+      garage_door:
+        friendly_name: 'Garage Door'
+        value_template: >-
+          {% if states.binary_sensor.ecolink_garage_door_tilt_sensor_sensor.state == 'on' %}
+            open
+          {% elif states.sensor.ecolink_garage_door_tilt_sensor_alarm_level.state == '255' %}
+            open
+          {% else %}
+            closed
+          {% endif %}
+        open_cover:
+          service: script.garage_opener_momentary_script
+        close_cover:
+          service: script.garage_opener_momentary_script
+        stop_cover:
+          service: script.garage_opener_momentary_script
+        icon_template: >-
+          {% if states.binary_sensor.ecolink_garage_door_tilt_sensor_sensor.state == 'on' %}
+            mdi:garage-open
+          {% elif states.sensor.ecolink_garage_door_tilt_sensor_alarm_level.state == '255' %}
+            mdi:garage-open
+          {% else %}
+            mdi:garage
+          {% endif %}
+
+automation: 
+- id: close_garage_at_night
+  alias: 'Close Garage at Night'
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '21:00:00'
+  condition:
+    condition: state
+    entity_id: 'binary_sensor.ecolink_garage_door_tilt_sensor_sensor' 
+    state: 'on'
+  action:
+  - service: script.garage_opener_momentary_script
+  - service: notify.email
+    data:
+      message: Garage Closed
+#
+# Modeled after https://community.home-assistant.io/t/sensor-template-cant-get-it-right/21782/7
+#sensor:
+#  - platform: template
+#    sensors:
+#      garage_door:
+#        friendly_name: "Garage Door"
+#        value_template: >-
+#          {% if states.binary_sensor.ecolink_garage_door_tilt_sensor_sensor.state == 'on' %}
+#            open
+#          {% elif states.sensor.ecolink_garage_door_tilt_sensor_alarm_level.state == '255' %}
+#            open
+#          {% else %}
+#            closed
+#          {% endif %}
+#        icon_template: >-
+#          {% if states.binary_sensor.ecolink_garage_door_tilt_sensor_sensor.state == 'on' %}
+#            mdi:garage-open
+#          {% elif states.sensor.ecolink_garage_door_tilt_sensor_alarm_level.state == '255' %}
+#            mdi:garage-open
+#          {% else %}
+#            mdi:garage
+#          {% endif %}

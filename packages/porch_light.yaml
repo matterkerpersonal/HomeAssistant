@@ -1,0 +1,20 @@
+automation: 
+- id: TurnOnPorchLights
+  alias: 'Turn on Porch Lights at Dusk'
+  trigger:
+    platform: sun
+    event: sunset
+    offset: '-00:30:00'
+  action:
+    service: switch.turn_on
+    entity_id: switch.frontporchlights
+#
+- id: TurnOffPorchLights
+  alias: 'Turn off Porch Lights at Dawn'
+  trigger:
+    platform: sun
+    event: sunrise
+    offset: '+00:30:00'
+  action:
+    service: switch.turn_off
+    entity_id: switch.frontporchlights

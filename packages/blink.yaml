@@ -1,0 +1,70 @@
+# Customized based on https://github.com/Taymurf/Home-AssistantConfig/blob/master/packages/cameras.yaml
+blink:
+  username: !secret blink_username
+  password: !secret blink_password
+  scan_interval: 300
+  binary_sensors:
+    monitored_conditions:
+      - motion_enabled
+  sensors:
+    monitored_conditions:
+      - battery
+      - temperature
+#      - status
+      - wifi_strength
+      
+homeassistant:
+  customize:
+    sensor.blink_porch_temperature:
+      friendly_name: 'Porch Temperature'
+      icon: mdi:thermometer
+    sensor.blink_garage_temperature:
+      friendly_name: 'Garage Temperature'
+      icon: mdi:thermometer
+    sensor.blink_porch_battery:
+      friendly_name: 'Porch Camera'
+    sensor.blink_garage_battery:
+      friendly_name: 'Garage Camera'
+    sensor.blink_front_door_battery:
+      friendly_name: 'Front Door Camera'
+    alarm_control_panel.blink_sync:
+      friendly_name: 'Blink Armed Status'
+      icon: mdi:security-home
+
+switch:
+- platform: template
+  switches:
+    blink_armed:
+      friendly_name: 'Blink Motion Detection'
+      value_template: "{{ is_state('alarm_control_panel.blink_sync', 'armed_away') }}"
+      turn_on:
+        service: alarm_control_panel.alarm_arm_away
+      turn_off:
+        service: alarm_control_panel.alarm_disarm
+
+automation:
+- id: toggle_motion_detection
+  alias: 'Toggle Motion Detection When Someone is Home'
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: device_tracker.presence_matt, device_tracker.presence_kim, device_tracker.presence_brynna
+  - platform: time
+    at: '22:05:00'
+  - platform: time
+    at: '05:05:00'
+  action:
+    service_template: >
+      {% if 
+        (is_state('device_tracker.presence_matt', 'not_home') and
+         is_state('device_tracker.presence_kim', 'not_home') and 
+         is_state('device_tracker.presence_brynna', 'not_home') 
+        ) or
+         now().hour >= 22 or 
+         now().hour < 5
+      %}
+        alarm_control_panel.alarm_arm_away
+      {% else %}
+        alarm_control_panel.alarm_disarm
+      {% endif %}
+      

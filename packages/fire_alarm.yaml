@@ -1,0 +1,125 @@
+sensor:
+- platform: template
+  sensors:
+    fire_alarm_upstairs_status:
+      value_template: '{%- if is_state("sensor.fire_alarm_upstairs_alarm_level", "0") %}
+                        Idle
+                        {%else%}
+                          {%- if is_state("sensor.sensor.fire_alarm_upstairs_alarm_type", "1") %}
+                          Fire
+                          {%- elif is_state("sensor.fire_alarm_upstairs_alarm_type", "2") %}
+                          C02
+                          {%- elif is_state("sensor.fire_alarm_upstairs_alarm_type", "12") %}
+                          Testing
+                          {%- elif is_state("sensor.fire_alarm_upstairs_alarm_type", "13") %}
+                          Idle
+                          {% else %}
+                          Unknown
+                          {%- endif %}
+                        {%endif%}'
+      icon_template: '{{ ''mdi:fire'' }}'
+      friendly_name: 'Upstairs Fire Alarm Status'
+      entity_id: sensor.fire_alarm_upstairs_alarm_level, sensor.fire_alarm_upstairs_alarm_type
+
+- platform: template
+  sensors:
+    fire_alarm_downstairs_status:
+      value_template: '{%- if is_state("sensor.fire_alarm_downstairs_alarm_level", "0") %}
+                        Idle
+                        {%else%}
+                          {%- if is_state("sensor.sensor.fire_alarm_downstairs_alarm_type", "1") %}
+                          Fire
+                          {%- elif is_state("sensor.fire_alarm_downstairs_alarm_type", "2") %}
+                          C02
+                          {%- elif is_state("sensor.fire_alarm_downstairs_alarm_type", "12") %}
+                          Testing
+                          {%- elif is_state("sensor.fire_alarm_downstairs_alarm_type", "13") %}
+                          Idle
+                          {% else %}
+                          Unknown
+                          {%- endif %}
+                        {%endif%}'
+      icon_template: '{{ ''mdi:fire'' }}'
+      friendly_name: 'Downstairs Fire Alarm Status'
+      entity_id: sensor.fire_alarm_downstairs_alarm_level, sensor.fire_alarm_downstairs_alarm_type
+
+- platform: template
+  sensors:
+    fire_alarm_upstairs_battery:
+      value_template: >-
+        {%- if is_state_attr( 'zwave.fire_alarm_upstairs', 'battery_level', 'None') %}
+          Unknown
+        {%- else -%}
+          {{ state_attr( 'zwave.fire_alarm_upstairs', 'battery_level') }}
+        {%- endif -%}
+      icon_template: >- 
+        {%- if is_state_attr( 'zwave.fire_alarm_upstairs', 'battery_level', 'None') -%}
+          mdi:battery-unknown
+        {%- elif state_attr( 'zwave.fire_alarm_upstairs', 'battery_level')|float > 80 -%}
+          mdi:battery-80
+        {%- elif state_attr( 'zwave.fire_alarm_upstairs', 'battery_level')|float > 60 -%}
+          mdi:battery-60
+        {%- elif state_attr( 'zwave.fire_alarm_upstairs', 'battery_level')|float > 40 -%}
+          mdi:battery-40
+        {%- elif state_attr( 'zwave.fire_alarm_upstairs', 'battery_level')|float > 20 -%}
+          mdi:battery-20
+        {%- else -%}
+          mdi:battery-alert
+        {%- endif -%}
+      friendly_name: 'Upstairs Fire Alarm'
+      unit_of_measurement: '%'
+
+- platform: template
+  sensors:
+    fire_alarm_downstairs_battery:
+      value_template: >-
+        {%- if is_state_attr( 'zwave.fire_alarm_downstairs', 'battery_level', 'None') %}
+          Unknown
+        {%- else -%}
+          {{ state_attr( 'zwave.fire_alarm_downstairs', 'battery_level') }}
+        {%- endif -%}
+      icon_template: >- 
+        {%- if is_state_attr( 'zwave.fire_alarm_downstairs', 'battery_level', 'None') -%}
+          mdi:battery-unknown
+        {%- elif state_attr( 'zwave.fire_alarm_downstairs', 'battery_level')|float > 80 -%}
+          mdi:battery-80
+        {%- elif state_attr( 'zwave.fire_alarm_downstairs', 'battery_level')|float > 60 -%}
+          mdi:battery-60
+        {%- elif state_attr( 'zwave.fire_alarm_downstairs', 'battery_level')|float > 40 -%}
+          mdi:battery-40
+        {%- elif state_attr( 'zwave.fire_alarm_downstairs', 'battery_level')|float > 20 -%}
+          mdi:battery-20
+        {%- else -%}
+          mdi:battery-alert
+        {%- endif -%}
+      friendly_name: 'Downstairs Fire Alarm'
+      unit_of_measurement: '%'
+
+binary_sensor:
+  - platform: template
+    sensors:
+      fire_alarms:
+        value_template: >-
+          {{(is_state("sensor.fire_alarm_upstairs_alarm_level", "255") and (
+              is_state("sensor.fire_alarm_upstairs_alarm_type", "1") or 
+              is_state("sensor.fire_alarm_upstairs_alarm_type", "2") or
+              is_state("sensor.fire_alarm_upstairs_alarm_type", "12"))
+            ) or (
+             is_state("sensor.fire_alarm_downstairs_alarm_level", "255") and (
+              is_state("sensor.fire_alarm_downstairs_alarm_type", "1") or 
+              is_state("sensor.fire_alarm_downstairs_alarm_type", "2") or
+              is_state("sensor.fire_alarm_downstairs_alarm_type", "12")))
+              
+          }}
+        friendly_name: 'Fire alarm'
+        entity_id: sensor.fire_alarm_upstairs_alarm_level, sensor.fire_alarm_upstairs_alarm_type, sensor.fire_alarm_downstairs_alarm_level, sensor.fire_alarm_downstairs_alarm_type
+
+alert:
+  fire_alarms:
+    name: Fire Alarm
+    done_message: Fire Alarm Cancelled
+    entity_id: binary_sensor.fire_alarms
+    repeat: 1
+    can_acknowledge: True
+    skip_first: False
+    notifiers: matt_and_kim_sms

@@ -1,0 +1,18 @@
+lock.schlage_be468_touchscreen_deadbolt_locked:
+  ignored: false
+  polling_intensity: 10
+binary_sensor.linear_gd00z4_garage_door_opener_remote_controller_sensor:
+  ignored: false
+  polling_intensity: 0
+sensor.linear_gd00z4_garage_door_opener_remote_controller_access_control_2:
+  ignored: false
+  polling_intensity: 1
+binary_sensor.linear_gd00z4_garage_door_opener_remote_controller_sensor_2:
+  ignored: false
+  polling_intensity: 1
+lock.frontdoor_locked:
+  ignored: false
+  polling_intensity: 10
+binary_sensor.ecolink_garage_door_tilt_sensor_sensor:
+  ignored: false
+  polling_intensity: 10

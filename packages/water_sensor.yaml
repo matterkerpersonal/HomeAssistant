@@ -1,0 +1,41 @@
+homeassistant:
+  customize:
+    binary_sensor.water_sensor_furnace_room_sensor:
+      device_class: moisture
+
+sensor:
+- platform: template
+  sensors:
+    water_sensor_furnace_room_battery:
+      value_template: >-
+        {%- if is_state_attr( 'zwave.water_sensor_furnace_room', 'battery_level', 'None') %}
+          Unknown
+        {%- else -%}
+          {{ state_attr( 'zwave.water_sensor_furnace_room', 'battery_level') }}
+        {%- endif -%}
+      icon_template: >- 
+        {%- if is_state_attr( 'zwave.water_sensor_furnace_room', 'battery_level', 'None') -%}
+          mdi:battery-unknown
+        {%- elif state_attr( 'zwave.water_sensor_furnace_room', 'battery_level')|float > 80 -%}
+          mdi:battery-80
+        {%- elif state_attr( 'zwave.water_sensor_furnace_room', 'battery_level')|float > 60 -%}
+          mdi:battery-60
+        {%- elif state_attr( 'zwave.water_sensor_furnace_room', 'battery_level')|float > 40 -%}
+          mdi:battery-40
+        {%- elif state_attr( 'zwave.water_sensor_furnace_room', 'battery_level')|float > 20 -%}
+          mdi:battery-20
+        {%- else -%}
+          mdi:battery-alert
+        {%- endif -%}
+      friendly_name: 'Furnace Room Water Sensor'
+      unit_of_measurement: '%'
+
+alert:
+  water_sensor_furnace_room:
+    name: 'Water Sensor Alert'
+    done_message: 'Water Sensor Cancelled'
+    entity_id: binary_sensor.water_sensor_furnace_room_sensor
+    repeat: 1
+    can_acknowledge: True
+    skip_first: False
+    notifiers: matt_and_kim_sms

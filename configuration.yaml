@@ -1,0 +1,207 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude:  !secret latitude
+  longitude: !secret longitude
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 1682
+  # metric for Metric, imperial for Imperial
+  unit_system: imperial
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: America/Denver
+  # Customization file
+  customize: !include customize.yaml
+  # Packages
+  packages: !include_dir_named packages
+  # Authentication Providers (https://www.home-assistant.io/docs/authentication/providers/#legacy-api-password)
+  auth_providers:
+   - type: homeassistant
+   - type: legacy_api_password
+
+http:
+  api_password: !secret api_password
+  
+# Show links to resources in log and frontend
+#introduction:
+
+# Enables the frontend
+frontend:
+
+# Enables configuration UI
+config:
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Enables support for tracking state changes over time
+history:
+  use_include_order: True
+  include:
+    entities:
+     - lock.frontdoor_locked
+     - sensor.front_door_lock_lockstatus
+     - sensor.frontdoor_access_control
+     - sensor.frontdoor_alarm_type
+     - sensor.frontdoor_alarm_level
+     - switch.frontporchlights
+     - cover.garage_door
+     - alarm_control_panel.blink_sync
+     - device_tracker.presence_matt
+     - device_tracker.presence_kim
+     - device_tracker.presence_brynna
+     - sensor.yweather_condition
+     - sun.sun
+     - sensor.blink_porch_temperature
+     - sensor.blink_garage_temperature
+     - sensor.yweather_temperature_min
+     - sensor.yweather_temperature_max
+
+
+# View all events in a logbook
+logbook:
+
+# Enables a map showing the location of tracked devices
+#map:
+
+# Track the sun
+sun:
+
+# Weather prediction (https://www.home-assistant.io/components/sensor.yweather/)
+sensor:
+  - platform: yweather
+    monitored_conditions:
+      - weather
+      - weather_current
+      - temp_min
+      - temp_max
+
+# Twilio SMS
+twilio:
+  account_sid: !secret twilio_account_sid
+  auth_token: !secret twilio_auth_token
+
+# Enable e-mail notifications
+notify:
+- name: email
+  platform: smtp
+  server: smtp.comcast.net
+  port: 587
+  timeout: 15
+  encryption: starttls
+  sender:   !secret email_sender
+  username: !secret email_username
+  password: !secret email_password
+  recipient:
+  - !secret email1
+  - !secret email2
+  sender_name: Erker Home Assistant
+
+- name: sms
+  platform: twilio_sms
+  from_number: !secret sms_from_number
+
+- name: matt_and_kim_sms
+  platform: group
+  services:
+    service: sms
+    data:
+      target: 
+      - !secret sms_matt
+      - !secret sms_kim
+      
+duckdns:
+  domain: !secret duckdns_domain
+  access_token: !secret duckdns_access_token
+  
+zwave:
+  usb_path: /dev/ttyACM0
+  network_key: !secret zwave_network_key
+
+panel_iframe:
+  configurator:
+    title: Configurator
+    icon: mdi:wrench
+    url: http://192.168.1.162:3218
+
+group:
+#Views------------------------------------------------------------------
+  default_view:
+    name: Default View
+    icon: mdi:home-assistant
+    view: yes
+    entities:
+      - group.current_status_group
+
+  current_status_group:
+    name: Current Status
+    view: no
+    control: hidden
+    entities:
+      - lock.frontdoor_locked
+      - switch.frontporchlights
+      - cover.garage_door
+      - switch.blink_armed
+      - sensor.fire_alarm_upstairs_status
+      - sensor.fire_alarm_downstairs_status
+      - binary_sensor.water_sensor_furnace_room_sensor
+      
+  presence_view:
+    name: Presence
+    view: yes
+    icon: mdi:home-account
+    entities:
+    - group.presence_group
+    
+  battery_group:
+    name: Battery Levels
+    view: no
+    entities:
+    - sensor.front_door_lock_battery
+    - sensor.garage_tilt_battery
+    - sensor.blink_front_door_battery
+    - sensor.blink_porch_battery
+    - sensor.blink_garage_battery
+    - sensor.fire_alarm_upstairs_battery
+    - sensor.fire_alarm_downstairs_battery
+    - sensor.water_sensor_furnace_room_battery
+
+  battery_view:
+    name: Battery Level View
+    view: yes
+    icon: mdi:battery-positive
+    entities:
+    - group.battery_group
+    
+  automations:
+    name: Automations
+    icon: mdi:auto-fix
+    view: yes
+    entities:
+      - automation.enable_housekeeper_lock_code
+      - automation.turn_on_porch_lights_at_dusk
+      - automation.turn_off_porch_lights_at_dawn
+      - automation.automatic_relock_front_door
+      - automation.email_on_lock_power_management
+      - automation.close_garage_at_night
+      - automation.toggle_motion_detection_when_someone_is_home
+
+automation:
+- id: update_notifications
+  alias: Send Update Notifications
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: updater.updater
+  action:
+    service: notify.email
+    data:
+      message: 'There is a new Home Assistant release available.'
+
+script: !include scripts.yaml

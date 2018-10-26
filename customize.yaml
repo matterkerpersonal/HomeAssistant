@@ -1,0 +1,7 @@
+zwave.schlage_be468_touchscreen_deadbolt_2:
+  friendly_name: Front Door Lock
+zwave.linear_gd00z4_garage_door_opener_remote_controller:
+  friendly_name: Garage Door Opener
+  node_name: Garage Door Opener
+switch.porchlight:
+  friendly_name: Porch Light

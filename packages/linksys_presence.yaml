@@ -1,0 +1,18 @@
+# https://www.home-assistant.io/components/device_tracker.linksys_smart/
+device_tracker:
+  - platform: linksys_smart
+    host: 192.168.1.1
+    interval_seconds: 30
+    new_device_defaults:
+      track_new_devices: False
+      hide_if_away: False
+      
+group:
+  presence_group:
+    name: Presence
+    icon: mdi:home-account
+    control: hidden
+    entities:
+      - device_tracker.presence_matt
+      - device_tracker.presence_kim
+      - device_tracker.presence_brynna

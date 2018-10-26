@@ -1,0 +1,98 @@
+#For Z-Wave codes, see https://www.home-assistant.io/docs/z-wave/entities
+sensor:
+- platform: template
+  sensors:
+    front_door_lock_battery:
+      friendly_name: "Front Door Lock"
+      value_template: >-
+        {%- if is_state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level', 'None') -%}
+          n/a
+        {%- else -%}
+          {{ state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level') }}
+        {%- endif -%}
+      icon_template: >-
+        {%- if is_state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level', 'None') -%}
+          mdi:battery-unknown
+        {%- elif state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level')|float > 80 -%}
+          mdi:battery-80
+        {%- elif state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level')|float > 60 -%}
+          mdi:battery-60
+        {%- elif state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level')|float > 40 -%}
+          mdi:battery-40
+        {%- elif state_attr( 'zwave.schlage_be468_touchscreen_deadbolt_2', 'battery_level')|float > 20 -%}
+          mdi:battery-20
+        {%- else -%}
+          mdi:battery-alert
+        {%- endif -%}
+      unit_of_measurement: '%'
+      entity_id: zwave.schlage_be468_touchscreen_deadbolt_2
+
+- platform: template
+  sensors:
+    front_door_lock_lockstatus:
+      friendly_name: "Front Door Lock Status"
+      value_template: '{{ state_attr( ''lock.frontdoor_locked'', ''lock_status'') }}'
+      entity_id:  lock.frontdoor_locked
+
+automation: 
+- id: EnableHousekeeperLockCode
+  alias: 'Enable Housekeeper Lock Code'
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: 05:00:00
+  condition:
+    condition: time
+    weekday:
+    - thu
+  action:
+  - service: lock.set_usercode
+    data:
+      node_id: 3
+      code_slot: 1
+      usercode: !secret lock_housekeeper_usercode_real
+  - service: notify.email
+    data:
+      message: Housekeeper Code Enabled
+  - delay: '12:00'
+  - service: lock.set_usercode
+    data:
+      node_id: 3
+      code_slot: 1
+      usercode: !secret lock_housekeeper_usercode_fake
+  - service: notify.email
+    data:
+      message: Housekeeper Code Disabled
+#
+- id: AutomaticRelockFrontDoor
+  alias: 'Automatic Relock Front Door'
+  trigger:
+  - platform: state
+    entity_id: sensor.frontdoor_access_control
+    to: '2'
+  - platform: state
+    entity_id: sensor.frontdoor_access_control
+    to: '4'
+  - platform: state
+    entity_id: sensor.frontdoor_access_control
+    to: '6'
+  - platform: state
+    entity_id: lock.frontdoor_locked
+    to: 'Unlocked'
+  action:
+  - delay: 00:01
+  - data:
+      entity_id: lock.frontdoor_locked
+    service: lock.lock
+  initial_state: 'on'
+#
+- id: EMailOnLockPowerManagement
+  alias: 'E-Mail On Lock Power Management'
+  trigger:
+    platform: state
+    from: '0'
+    entity_id: sensor.frontdoor_power_management
+  action:
+    service: notify.email
+    data:
+      message: '** Front Door Lock Power **'

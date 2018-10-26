@@ -1,0 +1,8 @@
+script:
+  garage_opener_momentary_script:
+    sequence:
+      - service: switch.turn_on
+        entity_id: switch.garage_door_opener
+      - delay: 00:00:02
+      - service: switch.turn_off
+        entity_id: switch.garage_door_opener
